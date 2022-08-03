@@ -1,0 +1,47 @@
+---
+title: "World's Most Productive Cities, by GDP (PPP)"
+date: "August 3, 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Map
+```{r load_libs}
+library(XML)
+library(leaflet)
+library(stringr)
+suppressPackageStartupMessages(library(dplyr))
+```
+
+```{r get_html_and_parse}
+url <- "https://en.wikipedia.org/wiki/List_of_cities_by_GDP"
+download.file(url,"data.html")
+ht <- htmlParse("data.html")
+unlink("data.html")
+```
+
+```{r process}
+dat <- xpathSApply(ht,"//table/tbody/tr/td",xmlValue)[1:140]
+dat <- sub("\n","",dat)
+dat <- str_trim(dat)
+df <- as.data.frame(matrix(dat, nrow=20, ncol=7, byrow=TRUE))
+names(df) <- c("rank_nom","rank_ppp","metro_area","country","unsd_sub_region","gdp_usdb","gdp_ppp_usdb")
+
+df$gdp_ppp_usdb <- sub(",","",df$gdp_ppp_usdb)
+df$gdp_ppp_usdb <- sub(",",".",df$gdp_ppp_usdb)
+df$gdp_ppp_usdb <- as.numeric(df$gdp_ppp_usdb)
+df$rank_ppp <- as.integer(df$rank_ppp)
+
+df <- df %>% select(rank_ppp:country,gdp_ppp_usdb)
+```
+
+```{r generate_map}
+my_map <- leaflet() %>% addTiles()
+my_map
+```
+
+## Methods
+Population data was scraped from [this Wikipedia page](https://en.wikipedia.org/wiki/List_of_European_cities_by_population_within_city_limits), which conveniently contains the coordinates for these cities as well. The official population estimates for the top 20 European cities (by population within city limits) are reproduced in the map above.

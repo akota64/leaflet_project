@@ -42,7 +42,7 @@ df <- df %>% select(rank_ppp:country,gdp_ppp_usdb)
 ```{r lat_long_api, cache=TRUE}
 ## Get lat, long coordinates of city from Google Maps Geocoding API
 get_coordinates <- function(city){
-    key <- "AIzaSyCIkAZR2obEeO6aepnBgiUr1i_qOhLhYDo"
+    key <- "AIzaSyCIkAZR2obEeO6aepnBgiUr1i_qOhLhYDo" # Deprecated
     req_url_1 <- "https://maps.googleapis.com/maps/api/geocode/xml?address="
     req_url_2 <- paste0("&key=", key)
     city <- gsub(" ","%20", city)

@@ -1,5 +1,6 @@
 ---
-title: "World's Most Productive Metro Areas, by GDP (PPP)"
+title: "World's Most Productive Metro Areas"
+subtitle: "Based on Estimated GDP (PPP)"
 date: "August 3, 2022"
 output: html_document
 ---
@@ -65,7 +66,7 @@ df <- df %>% mutate(
 )
 ```
 
-```{r generate_map}
+```{r generate_map, fig.cap="Click on circles for more info!"}
 my_map <- leaflet(df) %>% 
     addTiles() %>% 
     addCircles(lat = ~latitude, lng = ~longitude, weight = ~circle_weight,
@@ -77,4 +78,4 @@ my_map
 ```
 
 ## Methods
-First, the top 20 metropolitan areas and GDP (PPP) data were scraped from [this Wikipedia page](`r url`). Then, Google's Geocoding API was used to obtain coordinates for each of the 20 metro areas. The collected data is reproduced in the map above. Data was originally collected/estimated by Visual Capitalist in 2021.
+First, the top 20 metropolitan areas and GDP (PPP) data were scraped from [this Wikipedia page](`r url`). Then, Google's Geocoding API was used to obtain coordinates for each of the 20 metro areas. The collected data is reproduced in the map above. Note that the data was originally collected/estimated by Visual Capitalist in 2021.

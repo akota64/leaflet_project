@@ -1,5 +1,5 @@
 ---
-title: "World's Most Productive Cities, by GDP (PPP)"
+title: "World's Most Productive Metro Areas, by GDP (PPP)"
 date: "August 3, 2022"
 output: html_document
 ---
@@ -8,12 +8,12 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## Map
 ```{r load_libs}
 library(XML)
 library(leaflet)
 library(stringr)
 suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(httr))
 ```
 
 ```{r get_html_and_parse}
@@ -38,10 +38,43 @@ df$rank_ppp <- as.integer(df$rank_ppp)
 df <- df %>% select(rank_ppp:country,gdp_ppp_usdb)
 ```
 
+```{r lat_long_api, cache=TRUE}
+## Get lat, long coordinates of city from Google Maps Geocoding API
+get_coordinates <- function(city){
+    key <- "AIzaSyCIkAZR2obEeO6aepnBgiUr1i_qOhLhYDo"
+    req_url_1 <- "https://maps.googleapis.com/maps/api/geocode/xml?address="
+    req_url_2 <- paste0("&key=", key)
+    city <- gsub(" ","%20", city)
+    req_url <- paste0(req_url_1, city, req_url_2)
+    
+    cxml <- xmlParse(GET(req_url))
+    lat <- xpathSApply(cxml, "//location/lat", xmlValue)
+    long <- xpathSApply(cxml, "//location/lng", xmlValue)
+    
+    c(lat, long)
+}
+
+coords <- matrix(unlist(lapply(df$metro_area, get_coordinates)), nrow=20, ncol=2, byrow=TRUE)
+coords_df <- as.data.frame(coords)
+names(coords_df) <- c("latitude","longitude")
+df <- cbind(df, coords_df)
+df <- df %>% mutate(
+    latitude = as.numeric(latitude),
+    longitude = as.numeric(longitude),
+    circle_weight = gdp_ppp_usdb/max(gdp_ppp_usdb)*50
+)
+```
+
 ```{r generate_map}
-my_map <- leaflet() %>% addTiles()
+my_map <- leaflet(df) %>% 
+    addTiles() %>% 
+    addCircles(lat = ~latitude, lng = ~longitude, weight = ~circle_weight,
+               label = paste0(df$metro_area,", ",df$country), 
+               popup = paste0(df$metro_area,", ",df$country, "<br>",
+                              "World Rank: ", df$rank_ppp, "<br>",
+                              "GDP (PPP): $", df$gdp_ppp_usdb, "B"))
 my_map
 ```
 
 ## Methods
-Population data was scraped from [this Wikipedia page](https://en.wikipedia.org/wiki/List_of_European_cities_by_population_within_city_limits), which conveniently contains the coordinates for these cities as well. The official population estimates for the top 20 European cities (by population within city limits) are reproduced in the map above.
+First, the top 20 metropolitan areas and GDP (PPP) data were scraped from [this Wikipedia page](`r url`). Then, Google's Geocoding API was used to obtain coordinates for each of the 20 metro areas. The collected data is reproduced in the map above. Data was originally collected/estimated by Visual Capitalist in 2021.
